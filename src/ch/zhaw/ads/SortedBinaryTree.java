@@ -1,11 +1,14 @@
 package ch.zhaw.ads;
 
+import java.util.LinkedList;
+import java.util.List;
+
 public class SortedBinaryTree<T extends Comparable<T>> implements Tree<T> {
     protected TreeNode<T> root;
 
     private TreeNode<T> insertAt(TreeNode<T> node, T x) {
         if (node == null) {
-            return new TreeNode<T>(x);
+            return new TreeNode<>(x);
         } else {
             if (x.compareTo(node.getValue()) <= 0) {
                 node.left = insertAt(node.left, x);
@@ -16,11 +19,11 @@ public class SortedBinaryTree<T extends Comparable<T>> implements Tree<T> {
         }
     }
 
+    @Override
     public void add(T x) {
         root = insertAt(root, x);
     }
 
-    // find node to replace
     private TreeNode<T> findRepAt(TreeNode<T> node, TreeNode<T> rep) {
         if (node.right != null) {
             node.right = findRepAt(node.right, rep);
@@ -31,69 +34,86 @@ public class SortedBinaryTree<T extends Comparable<T>> implements Tree<T> {
         return node;
     }
 
-    // remove node
     private TreeNode<T> removeAt(TreeNode<T> node, T x, TreeNode<T> removed) {
         if (node == null) {
             return null;
         } else {
-            if (x.compareTo(node.getValue()) == 0) {
-                // found
+            int cmp = x.compareTo(node.getValue());
+            if (cmp < 0) {
+                node.left = removeAt(node.left, x, removed);
+            } else if (cmp > 0) {
+                node.right = removeAt(node.right, x, removed);
+            } else {
                 removed.values = node.values;
                 if (node.left == null) {
-                    node = node.right;
+                    return node.right;
                 } else if (node.right == null) {
-                    node = node.left;
+                    return node.left;
                 } else {
-                    node.left = findRepAt(node.left, node);
+                    TreeNode<T> rep = new TreeNode<>(null);
+                    node.left = findRepAt(node.left, rep);
+                    node.values = rep.values;
                 }
-            } else if (x.compareTo(node.getValue()) < 0) {
-                // search left
-                node.left = removeAt(node.left, x, removed);
-            } else {
-                // search right
-                node.right = removeAt(node.right, x, removed);
             }
             return node;
         }
     }
 
+    @Override
     public T remove(T x) {
-        TreeNode<T> removed = new TreeNode<T>(null);
+        TreeNode<T> removed = new TreeNode<>(null);
         root = removeAt(root, x, removed);
         return removed.getValue();
     }
 
+    @Override
     public boolean isEmpty() {
         return root == null;
     }
 
+    @Override
     public Traversal<T> traversal() {
-        // TODO Implement
+        return new TreeTraversal<>(root);
     }
 
+    // Aufgabe 4: Höhe berechnen
     protected int calcHeight(TreeNode<T> node) {
-        // TODO Implement
+        if (node == null) {
+            return 0;
+        }
+        int leftH = calcHeight(node.left);
+        int rightH = calcHeight(node.right);
+        return 1 + Math.max(leftH, rightH);
     }
 
+    @Override
     public int height() {
         return calcHeight(root);
     }
 
-    protected int calcSize(TreeNode<T> p) {
-        // TODO Implement
+    // Aufgabe 4: Größe berechnen
+    protected int calcSize(TreeNode<T> node) {
+        if (node == null) {
+            return 0;
+        }
+        return 1 + calcSize(node.left) + calcSize(node.right);
     }
 
+    @Override
     public int size() {
         return calcSize(root);
     }
 
+    @Override
     public boolean balanced() {
         return false;
     }
 
-    // only for testing and debugging: show the structure of the tree
     public String printTree() {
         StringBuilder out = new StringBuilder();
+        if (root == null) {
+            return out.toString();
+        }
         if (root.right != null) {
             printTree(root.right, out, true, "");
         }
